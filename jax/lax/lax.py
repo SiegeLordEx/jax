@@ -319,6 +319,15 @@ def convert_element_type(operand, new_dtype):
   Returns:
     An array with the same shape as `operand`, cast elementwise to `new_dtype`.
   """
+  dtype = new_dtype
+  if dtype and onp.dtype(dtype) != xla_bridge.canonicalize_dtype(dtype):
+    msg = ("Explicitly requested dtype {} is not available, and will be "
+           "truncated to dtype {}. To enable more dtypes, set the "
+           "jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell "
+           "environment variable. "
+           "See https://github.com/google/jax#current-gotchas for more.")
+    warnings.warn(msg.format(dtype, xla_bridge.canonicalize_dtype(dtype).name))
+
   new_dtype = xla_bridge.canonicalize_dtype(new_dtype)
   old_dtype = _dtype(operand)
   if old_dtype != new_dtype:
@@ -1011,6 +1020,15 @@ def full(shape, fill_value, dtype=None):
   if onp.shape(fill_value):
     msg = "full must be called with scalar fill_value, got fill_value.shape {}."
     raise TypeError(msg.format(onp.shape(fill_value)))
+
+  if dtype and onp.dtype(dtype) != xla_bridge.canonicalize_dtype(dtype):
+    msg = ("Explicitly requested dtype {} is not available, and will be "
+           "truncated to dtype {}. To enable more dtypes, set the "
+           "jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell "
+           "environment variable. "
+           "See https://github.com/google/jax#current-gotchas for more.")
+    warnings.warn(msg.format(dtype, xla_bridge.canonicalize_dtype(dtype).name))
+
   dtype = dtype or _dtype(fill_value)
   dtype = xla_bridge.canonicalize_dtype(dtype)
 

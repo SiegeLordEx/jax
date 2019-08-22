@@ -1387,6 +1387,14 @@ def array(object, dtype=None, copy=True, order="K", ndmin=0):
   if order is not None and order != "K":
     raise NotImplementedError("Only implemented for order='K'")
 
+  if dtype and onp.dtype(dtype) != xla_bridge.canonicalize_dtype(dtype):
+    msg = ("Explicitly requested dtype {} is not available, and will be "
+           "truncated to dtype {}. To enable more dtypes, set the "
+           "jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell "
+           "environment variable. "
+           "See https://github.com/google/jax#current-gotchas for more.")
+    warnings.warn(msg.format(dtype, xla_bridge.canonicalize_dtype(dtype).name))
+
   if isinstance(object, ndarray):
     if dtype and _dtype(object) != xla_bridge.canonicalize_dtype(dtype):
       out = lax.convert_element_type(object, dtype)

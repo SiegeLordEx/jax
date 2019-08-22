@@ -19,6 +19,7 @@ from __future__ import print_function
 import collections
 from functools import partial
 import unittest
+import warnings
 
 from absl.testing import absltest
 import numpy as onp
@@ -41,6 +42,7 @@ from jax import tree_util
 
 from jax.config import config
 config.parse_flags_with_absl()
+FLAGS = config.FLAGS
 
 class APITest(jtu.JaxTestCase):
 
@@ -968,6 +970,21 @@ class APITest(jtu.JaxTestCase):
       ys = [f.result() for f in futures]
     for x, y in zip(xs, ys):
       self.assertAllClose(x * 2 - 3., y, check_dtypes=True)
+
+  def test_issue_1230(self):
+    if FLAGS.jax_enable_x64:
+      return  # test only applies when x64 is disabled
+    with warnings.catch_warnings(record=True) as w:
+      warnings.simplefilter("always")
+
+      np.array([1, 2, 3], dtype="float64")
+      assert len(w) > 0
+      msg = str(w[-1].message)
+      assert "dtype float64 is not available" in msg
+
+      prev_len = len(w)
+      np.array([1, 2, 3], dtype="float32")
+      assert len(w) == prev_len
 
 
 if __name__ == '__main__':
